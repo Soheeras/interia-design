@@ -1,0 +1,82 @@
+{
+	"name": "create-block-theme",
+	"version": "2.7.0",
+	"private": true,
+	"description": "Create a block-based theme",
+	"author": "The WordPress Contributors",
+	"license": "GPL-2.0-or-later",
+	"keywords": [
+		"WordPress",
+		"block"
+	],
+	"homepage": "https://wordpress.org/plugins/create-block-theme/",
+	"repository": "git+https://github.com/WordPress/create-block-theme.git",
+	"bugs": {
+		"url": "https://wordpress.org/support/plugin/create-block-theme/"
+	},
+	"engines": {
+		"node": ">=20.10.0",
+		"npm": ">=10.2.3"
+	},
+	"dependencies": {
+		"@codemirror/lang-json": "^6.0.2",
+		"@uiw/react-codemirror": "^4.25.1",
+		"@wordpress/icons": "^10.30.0",
+		"lib-font": "^2.4.3"
+	},
+	"devDependencies": {
+		"@actions/core": "^1.11.1",
+		"@emotion/babel-plugin": "^11.13.5",
+		"@wordpress/base-styles": "^6.6.0",
+		"@wordpress/env": "^10.30.0",
+		"@wordpress/scripts": "^30.23.0",
+		"babel-plugin-inline-json-import": "^0.3.2",
+		"eslint-plugin-unicorn": "^56.0.1",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.1.6",
+		"prettier": "npm:wp-prettier@3.0.3",
+		"simple-git": "^3.28.0"
+	},
+	"scripts": {
+		"build": "wp-scripts build src/admin-landing-page.js src/plugin-sidebar.js",
+		"format": "wp-scripts format",
+		"lint:css": "wp-scripts lint-style",
+		"lint:css:fix": "npm run lint:css -- --fix",
+		"lint:js": "wp-scripts lint-js",
+		"lint:js:fix": "npm run lint:js -- --fix",
+		"lint:php": "composer run-script lint",
+		"lint:php:fix": "composer run-script format",
+		"lint:md-docs": "wp-scripts lint-md-docs",
+		"lint:pkg-json": "wp-scripts lint-pkg-json",
+		"test:php": "npm run test:php:setup && wp-env run tests-wordpress --env-cwd='wp-content/plugins/create-block-theme' composer run-script test",
+		"test:php:watch": "wp-env run cli --env-cwd='wp-content/plugins/create-block-theme' composer run-script test:watch",
+		"test:php:setup": "wp-env start",
+		"packages-update": "wp-scripts packages-update",
+		"start": "wp-scripts start src/admin-landing-page.js src/plugin-sidebar.js",
+		"composer": "wp-env run cli --env-cwd=wp-content/plugins/create-block-theme composer",
+		"update-version": "node update-version-and-changelog.js",
+		"prepare": "husky install",
+		"wp-env": "wp-env",
+		"test:unit": "wp-scripts test-unit-js --config test/unit/jest.config.js"
+	},
+	"lint-staged": {
+		"*.{js,json,yml}": [
+			"wp-scripts format"
+		],
+		"*.js": [
+			"npm run lint:js"
+		],
+		"*.{css,scss}": [
+			"npm run lint:css"
+		],
+		"*.php": [
+			"npm run lint:php"
+		],
+		"*.md": [
+			"npm run lint:md-docs"
+		],
+		"package.json": [
+			"npm run lint:pkg-json"
+		]
+	}
+}

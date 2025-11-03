@@ -1,0 +1,199 @@
+<?php
+
+require_once __DIR__ . '/base.php';
+
+/**
+ * Test the create method of the CBT_Theme_Readme class.
+ *
+ * @package Create_Block_Theme
+ * @covers CBT_Theme_Readme::create
+ * @group readme
+ */
+class CBT_ThemeReadme_Create extends CBT_Theme_Readme_UnitTestCase {
+
+	/**
+	 * @dataProvider data_test_create
+	 */
+	public function test_create( $data ) {
+		$readme = CBT_Theme_Readme::create( $data );
+
+		// Check sanitazion before altering the content.
+		$this->assertStringNotContainsString( "\r\n", $readme, 'The readme content contains DOS newlines.' );
+
+		// Removes the newlines from the readme content to make it easier to search for strings.
+		$readme_without_newlines = $this->remove_newlines( $readme );
+
+		$expected_name                = '== ' . $data['name'] . ' ==';
+		$expected_author              = 'Contributors: ' . $data['author'];
+		$expected_requires_wp         = 'Requires at least: ' . $data['requires_wp'] ?? CBT_Theme_Utils::get_current_wordpress_version();
+		$expected_wp_version          = 'Tested up to: ' . $data['wp_version'] ?? CBT_Theme_Utils::get_current_wordpress_version();
+		$expected_font_credits        = '== Fonts ==' .
+			( isset( $data['font_credits'] )
+				? $this->remove_newlines( $data['font_credits'] )
+				: ''
+			);
+		$expected_image_credits       = '== Images ==' .
+			( isset( $data['image_credits'] )
+				? $this->remove_newlines( $data['image_credits'] )
+				: ''
+			);
+		$expected_recommended_plugins = '== Recommended Plugins ==' . $this->remove_newlines( $data['recommended_plugins'] );
+
+		$this->assertStringContainsString( $expected_name, $readme_without_newlines, 'The expected name is missing.' );
+		$this->assertStringContainsString( $expected_author, $readme_without_newlines, 'The expected author is missing.' );
+		$this->assertStringContainsString( $expected_requires_wp, $readme_without_newlines, 'The expected Requires at least version is missing.' );
+		$this->assertStringContainsString( $expected_wp_version, $readme_without_newlines, 'The expected WP version is missing.' );
+		$this->assertStringContainsString( $expected_recommended_plugins, $readme_without_newlines, 'The expected recommended plugins are missing.' );
+
+		// Assetion specific to child themes.
+		if ( isset( $data['is_child_theme'] ) && $data['is_child_theme'] ) {
+			$this->assertStringContainsString(
+				$data['name'] . ' is a child theme of Test Readme Theme (https://example.org/themes/test-readme-theme), (C) the WordPress team, [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)',
+				$readme_without_newlines,
+				'The expected reference to the parent theme is missing.'
+			);
+		}
+
+		// Assetion specific to child themes.
+		if ( isset( $data['is_cloned_theme'] ) && $data['is_cloned_theme'] ) {
+			$this->assertStringContainsString(
+				$data['name'] . ' is based on Test Readme Theme (https://example.org/themes/test-readme-theme), (C) the WordPress team, [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)',
+				$readme_without_newlines,
+				'The expected reference to the parent theme is missing.'
+			);
+		}
+
+		// Assertion specific to font credits.
+		if ( isset( $data['font_credits'] ) ) {
+			$this->assertStringContainsString( $expected_font_credits, $readme_without_newlines, 'The expected font credits are missing.' );
+		} else {
+			$this->assertStringNotContainsString( $expected_font_credits, $readme_without_newlines, 'The font credits title should not be present if font credits were not defined.' );
+		}
+
+		// Assertion specific to imagee credits.
+		if ( isset( $data['image_credits'] ) ) {
+			$this->assertStringContainsString( $expected_image_credits, $readme_without_newlines, 'The expected image credits are missing.' );
+		} else {
+			$this->assertStringNotContainsString( $expected_image_credits, $readme_without_newlines, 'The image credits title should not be present if image_credits were not defined.' );
+
+		}
+	}
+
+	public function data_test_create() {
+		return array(
+			'complete data for a nomal theme'  => array(
+				'data' => array(
+					'name'                 => 'My Theme',
+					'description'          => 'New theme description',
+					'uri'                  => 'https://example.com',
+					'author'               => 'New theme author',
+					'author_uri'           => 'https://example.com/author',
+					'copyright_year'       => '2077',
+					'wp_version'           => '12.12',
+					'requires_wp'          => '12.12',
+					'required_php_version' => '10.0',
+					'license'              => 'GPLv2 or later',
+					'license_uri'          => 'https://www.gnu.org/licenses/gpl-2.0.html',
+					'image_credits'        => 'The images were taken from https://example.org and have a CC0 license.',
+					'recommended_plugins'  => 'The theme is best used with the following plugins: Plugin 1, Plugin 2, Plugin 3.',
+					'font_credits'         => 'Font credit example text',
+				),
+			),
+			'complete data for a child theme'  => array(
+				'data' => array(
+					'name'                 => 'My Child Theme',
+					'description'          => 'New child theme description',
+					'uri'                  => 'https://example.com',
+					'author'               => 'New theme author',
+					'author_uri'           => 'https://example.com/author',
+					'copyright_year'       => '2078',
+					'requires_wp'          => '12.12',
+					'wp_version'           => '13.13',
+					'required_php_version' => '11.0',
+					'license'              => 'GPLv2 or later',
+					'license_uri'          => 'https://www.gnu.org/licenses/gpl-2.0.html',
+					'image_credits'        => 'The images were taken from https://example.org and have a CC0 license.',
+					'recommended_plugins'  => 'The theme is best used with the following plugins: Plugin 1, Plugin 2, Plugin 3.',
+					'is_child_theme'       => true,
+					'font_credits'         => 'Font credit example text',
+				),
+			),
+			'complete data for a cloned theme' => array(
+				'data' => array(
+					'name'                 => 'My Cloned Theme',
+					'description'          => 'New cloned theme description',
+					'uri'                  => 'https://example.com',
+					'author'               => 'New theme author',
+					'author_uri'           => 'https://example.com/author',
+					'copyright_year'       => '2079',
+					'requires_wp'          => '12.12',
+					'wp_version'           => '14.14',
+					'required_php_version' => '12.0',
+					'license'              => 'GPLv2 or later',
+					'license_uri'          => 'https://www.gnu.org/licenses/gpl-2.0.html',
+					'image_credits'        => 'The images were taken from https://example.org and have a CC0 license.',
+					'recommended_plugins'  => 'The theme is best used with the following plugins: Plugin 1, Plugin 2, Plugin 3.',
+					'is_cloned_theme'      => true,
+					'font_credits'         => 'Font credit example text',
+				),
+			),
+			'missing font credits'             => array(
+				'data' => array(
+					'name'                 => 'My Theme',
+					'description'          => 'New theme description',
+					'uri'                  => 'https://example.com',
+					'author'               => 'New theme author',
+					'author_uri'           => 'https://example.com/author',
+					'copyright_year'       => '2077',
+					'requires_wp'          => '12.12',
+					'wp_version'           => '12.12',
+					'required_php_version' => '10.0',
+					'license'              => 'GPLv2 or later',
+					'license_uri'          => 'https://www.gnu.org/licenses/gpl-2.0.html',
+					'recommended_plugins'  => 'The theme is best used with the following plugins: Plugin 1, Plugin 2, Plugin 3.',
+					'image_credits'        => 'The images were taken from https://example.org and have a CC0 license.',
+				),
+			),
+			'missing image credits'            => array(
+				'data' => array(
+					'name'                 => 'My Theme',
+					'description'          => 'New theme description',
+					'uri'                  => 'https://example.com',
+					'author'               => 'New theme author',
+					'author_uri'           => 'https://example.com/author',
+					'copyright_year'       => '2077',
+					'requires_wp'          => '12.12',
+					'wp_version'           => '12.12',
+					'required_php_version' => '10.0',
+					'license'              => 'GPLv2 or later',
+					'license_uri'          => 'https://www.gnu.org/licenses/gpl-2.0.html',
+					'recommended_plugins'  => 'The theme is best used with the following plugins: Plugin 1, Plugin 2, Plugin 3.',
+					'font_credits'         => 'Font credit example text',
+				),
+			),
+			/*
+			 * This string contains DOS newlines.
+			 * It uses double quotes to make PHP interpret the newlines as newlines and not as string literals.
+			 */
+			'With DOS newlines'                => array(
+				'data' => array(
+					'name'                 => 'My Theme',
+					'description'          => 'New theme description',
+					'uri'                  => 'https://example.com',
+					'author'               => 'New theme author',
+					'author_uri'           => 'https://example.com/author',
+					'copyright_year'       => '2077',
+					'requires_wp'          => '12.12',
+					'wp_version'           => '12.12',
+					'required_php_version' => '10.0',
+					'license'              => 'GPLv2 or later',
+					'license_uri'          => 'https://www.gnu.org/licenses/gpl-2.0.html',
+					'image_credits'        => "New image credits \r\n New image credits 2",
+					'recommended_plugins'  => "Plugin1 \r\n Plugin2 \r\n Plugin3",
+					'font_credits'         => "Font1 \r\n Font2 \r\n Font3",
+				),
+			),
+			// TODO: Add more test cases.
+		);
+	}
+}
